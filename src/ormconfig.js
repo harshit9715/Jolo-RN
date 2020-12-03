@@ -4,15 +4,15 @@ import { entityList } from '@jolocom/sdk-storage-typeorm'
 const migrations = []
 
 export default ConnectionOptions = {
-    type: 'react-native',
-    database: 'MyApplicationData',
-    location: 'default',
-    logging: ['error', 'warn', 'schema'],
-    entities: entityList,
-    migrations,
-    migrationsRun: true,
-    synchronize: false,
-    cli: {
-      migrationsDir: './migrations',
-    },
+  type: 'react-native',
+  database: 'MyApplicationData',
+  location: 'default',
+  logging: ['error', 'warn', 'schema'],
+  entities: entityList,
+  migrations,
+  migrationsRun: true,
+  synchronize: false,
+  cli: {
+    migrationsDir: 'src/migrations',
+  },
 };
