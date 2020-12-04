@@ -11,20 +11,11 @@ import React, { useEffect } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
-  ScrollView,
   View,
-  Text,
   StatusBar,
   TextInput,
   Button,
 } from 'react-native';
-import {
-  Header,
-  LearnMoreLinks,
-  Colors,
-  DebugInstructions,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
 
 // Functional dependencies
 import {
@@ -38,11 +29,16 @@ import {
 import WS from 'react-native-websocket'
 import { createConnection, getConnection } from 'typeorm'
 import ormconfig from './src/ormconfig'
+import { generateSecureRandomBytes } from '@jolocom/sdk/js/util'
+import { entropyToMnemonic } from 'bip39'
+"use strict";
+const humanTimeout = () => new Promise(resolve => setTimeout(resolve, 1000));
 
 const App = () => {
 
   const [email, setEmail] = React.useState('');
   const [sdk, setSDK] = React.useState('');
+  const [did, setDid] = React.useState('');
   async function initJolocom() {
     await initTypeorm().then(async storage => {
       const passwordStore = new JolocomKeychainPasswordStore()
@@ -53,8 +49,59 @@ const App = () => {
         sdk,
         passwordStore,
       })
-      console.log("agent", agent)
+      console.log("agent", JSON.stringify(agent))
       setSDK(sdk);
+      let mnemonic =
+        "mistake ordinary flush whisper crumble nerve asthma system science relax object ski";
+      const seed = await generateSecureRandomBytes(16)
+      const identity = await agent.loadFromMnemonic(entropyToMnemonic(seed))
+      await humanTimeout()
+      const encryptedSeed = await identity.asymEncryptToDid(
+        Buffer.from(seed),
+        identity.did, {
+        prefix: '',
+        resolve: async _ => identity.identity
+      })
+      await agent.storage.store.setting(
+        'encryptedSeed',
+        {
+          b64Encoded: encryptedSeed.toString('base64')
+        }
+      )
+      await humanTimeout()
+      setDid(identity.did)
+      console.log('did', did)
+      // const agent = sdk._makeAgent("harshit123", "jolo");
+      // const alice = await agent.loadFromMnemonic(mnemonic);
+      //console.log("alice", JSON.stringify(alice.didDocument));
+
+      // const myPublicProfile = {
+      //   name: "HyperloopTT",
+      //   about: "Digital Identity Solutions Provider",
+      //   url: "https://www.hyperlooptt.com/",
+      //   image: "https://pbs.twimg.com/profile_images/1205537913125167104/OmZn7WUw_400x400.jpg",
+      //   description: "HTT Description",
+      //   customData: "testing what else can be added.",
+      // };
+      // let signedCred = await agent.signedCredential({
+      //   metadata: claimsMetadata.publicProfile,
+      //   claim: myPublicProfile,
+      //   subject: alice.identity.did,
+      // });
+      // // console.log("signedCred", JSON.stringify(signedCred));
+      // await agent.didMethod.registrar.updatePublicProfile(
+      //   agent.keyProvider,
+      //   "harshit123",
+      //   alice.identity,
+      //   signedCred
+      // );
+      // let resolved = await sdk.didMethods
+      //   .get("jolo")
+      //   .resolver.resolve(
+      //     "did:jolo:a93a40cc4870d88db6d29600b95bb6cc166409b2e0fccbc038b48df81c4d816a"
+      //   );
+      //  console.log("did", JSON.stringify(resolved.didDocument));
+
     })
 
     // const conn = await createConnection(ormconfig)
@@ -80,10 +127,10 @@ const App = () => {
   }
   const createAgent = async (sdk) => {
 
-    console.log("sdk", sdk);
-    console.log("done");
+    // console.log("sdk", sdk);
+    //console.log("done");
     const bob = await sdk.createAgent('testPassrtry', 'jun');
-    console.log(bob);
+    //console.log(bob);
   }
   useEffect(() => {
     console.log('effect');
@@ -120,41 +167,9 @@ const App = () => {
 
 const styles = StyleSheet.create({
   scrollView: {
-    backgroundColor: Colors.lighter,
+    backgroundColor: "#000000",
   },
-  engine: {
-    position: 'absolute',
-    right: 0,
-  },
-  body: {
-    backgroundColor: Colors.white,
-  },
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: Colors.black,
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-    color: Colors.dark,
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-  footer: {
-    color: Colors.dark,
-    fontSize: 12,
-    fontWeight: '600',
-    padding: 4,
-    paddingRight: 12,
-    textAlign: 'right',
-  },
+
 });
 
 export default App;
